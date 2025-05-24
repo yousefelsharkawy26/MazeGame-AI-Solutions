@@ -1,6 +1,6 @@
 import pygame
 import random
-from solver import DFSSolver, BFSSolver, UCSSolver, AStarSolver, GeneticSolver, IDSSolver
+from solver import DFSSolver, BFSSolver, UCSSolver, AStarSolver, GeneticSolver, IDSSolver, BSSolver
 from pygame.locals import (
     QUIT, MOUSEBUTTONDOWN
     ,KEYDOWN, K_r, K_SPACE
@@ -26,6 +26,7 @@ BFS_COLOR = (255, 100, 100)
 UCS_COLOR = (100, 255, 100)
 GREEDY_COLOR = (255, 255, 100)
 GA_COLOR = (150, 50, 200)
+BS_COLOR = (150, 200, 255) 
 BUTTON_HOVER_COLOR = (180, 180, 180)
 
 # Moves (up, right, down, left)
@@ -116,6 +117,7 @@ class MazeVisualizer:
             Button(MAZE_WIDTH + 20, 170, SCREEN_WIDTH-MAZE_WIDTH-40, 40, "Solve UCS", UCS_COLOR),
             Button(MAZE_WIDTH + 20, 210, SCREEN_WIDTH-MAZE_WIDTH-40, 40, "Solve A*", GREEDY_COLOR),
             Button(MAZE_WIDTH + 20, 250, SCREEN_WIDTH-MAZE_WIDTH-40, 40, "Solve GENETIC", GA_COLOR),
+            Button(MAZE_WIDTH + 20, 170, SCREEN_WIDTH-MAZE_WIDTH-40, 40, "Solve BS", BS_COLOR),
             Button(MAZE_WIDTH + 20, 290, SCREEN_WIDTH-MAZE_WIDTH-40, 40, "Reset Maze", (200, 200, 200))
         ]
         return buttons
@@ -255,11 +257,15 @@ class MazeGame:
                             self.visualizer.solver = GeneticSolver(self.visualizer.maze, (1, 1), 
                                                             (len(self.visualizer.maze[0])-2, 
                                                             len(self.visualizer.maze)-2))
-                        elif i == 6:  # Reset
+                        elif i == 6:  # GA
+                            self.visualizer.solver = BSSolver(self.visualizer.maze, (1, 1), 
+                                                            (len(self.visualizer.maze[0])-2, 
+                                                            len(self.visualizer.maze)-2))
+                        elif i == 7:  # Reset
                             self.generate_new_maze()
                             return True
                         
-                        if i < 6:  # Any solver button (now 6 buttons before Reset)
+                        if i < 7:  # Any solver button (now 6 buttons before Reset)
                             self.visualizer.solver.start_solving()
         return True
     

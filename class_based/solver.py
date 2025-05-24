@@ -355,3 +355,99 @@ class IDSSolver(MazeSolver):
                     self.stack.append(((nx, ny), self.current_depth + 1))
         
         return True
+    
+class BSSolver(MazeSolver):
+    def __init__(self, maze, start_pos, end_pos):
+        super().__init__(maze, start_pos, end_pos)
+        self.reset()
+        
+    def reset(self):
+        super().reset()
+        # Initialize forward search
+        self.forward_queue = collections.deque([self.start_pos])
+        self.forward_visited = [[False for _ in range(self.width)] for _ in range(self.height)]
+        self.forward_visited[self.start_pos[1]][self.start_pos[0]] = True
+        self.forward_parent = {self.start_pos: None}
+        
+        # Initialize backward search
+        self.backward_queue = collections.deque([self.end_pos])
+        self.backward_visited = [[False for _ in range(self.width)] for _ in range(self.height)]
+        self.backward_visited[self.end_pos[1]][self.end_pos[0]] = True
+        self.backward_parent = {self.end_pos: None}
+        
+        self.intersection = None
+        self.current_pos = self.start_pos  # For visualization
+        
+    def solve_step(self):
+        if not self.forward_queue or not self.backward_queue:
+            self.solving = False
+            return False
+            
+        self.steps += 1
+        
+        # Alternate between forward and backward steps
+        if len(self.forward_queue) <= len(self.backward_queue):
+            # Process forward search
+            if self.forward_queue:
+                current = self.forward_queue.popleft()
+                self.current_pos = current  # Update visualization
+                
+                # Check if current node is visited by backward search
+                if self.backward_visited[current[1]][current[0]]:
+                    self.intersection = current
+                    self.solution_found = True
+                    self.solving = False
+                    self.reconstruct_path()
+                    return True
+                
+                # Explore neighbors
+                x, y = current
+                for dx, dy in MOVES:
+                    nx, ny = x + dx, y + dy
+                    if (0 <= nx < self.width and 0 <= ny < self.height and 
+                        not self.forward_visited[ny][nx] and self.maze[ny][nx] == 0):
+                        self.forward_visited[ny][nx] = True
+                        self.forward_parent[(nx, ny)] = (x, y)
+                        self.forward_queue.append((nx, ny))
+        else:
+            # Process backward search
+            if self.backward_queue:
+                current = self.backward_queue.popleft()
+                
+                # Check if current node is visited by forward search
+                if self.forward_visited[current[1]][current[0]]:
+                    self.intersection = current
+                    self.solution_found = True
+                    self.solving = False
+                    self.reconstruct_path()
+                    return True
+                
+                # Explore neighbors
+                x, y = current
+                for dx, dy in MOVES:
+                    nx, ny = x + dx, y + dy
+                    if (0 <= nx < self.width and 0 <= ny < self.height and 
+                        not self.backward_visited[ny][nx] and self.maze[ny][nx] == 0):
+                        self.backward_visited[ny][nx] = True
+                        self.backward_parent[(nx, ny)] = (x, y)
+                        self.backward_queue.append((nx, ny))
+        
+        return True
+    
+    def reconstruct_path(self):
+        # Reconstruct path from start to intersection
+        path = []
+        node = self.intersection
+        while node is not None:
+            path.append(node)
+            node = self.forward_parent.get(node)
+        path.reverse()
+        
+        # Reconstruct path from intersection to end (excluding intersection)
+        node = self.backward_parent.get(self.intersection)
+        while node is not None:
+            path.append(node)
+            node = self.backward_parent.get(node)
+            
+        self.solution_path = path
+
